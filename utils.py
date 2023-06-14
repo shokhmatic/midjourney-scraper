@@ -3,6 +3,7 @@ import json
 from tqdm import tqdm
 import os
 from dotenv import load_dotenv
+from datetime import datetime
 load_dotenv()
 
 output_folder=os.getenv('OUTPUT_FOLDER')
@@ -17,10 +18,12 @@ if allow_proxy:
         'http':proxy,
         'https':proxy
     }
-def download_image(image_url):
-    if not os.path.exists(output_folder):
-        os.mkdir(output_folder)
-    name=image_url.split('/')[-1]
+def download_image(name,image_url):
+    now=datetime.now().strftime('%Y_%m_%d')
+    current_datetime_folder=f'{output_folder}/{now}/'
+    if not os.path.exists(current_datetime_folder):
+        os.mkdir(current_datetime_folder)
+
     payload = {}
     headers = {
     'authority': 'cdn.midjourney.com',
@@ -38,13 +41,14 @@ def download_image(image_url):
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     }
     response = requests.request("GET", image_url, headers=headers, data=payload,proxies=proxies)
-    with open(f'{output_folder}/{name}','wb') as f:
+    with open(f'{current_datetime_folder}/{name}','wb') as f:
         f.write(response.content)
 
 
 def download_images(image_urls):
-    for image_url in tqdm(image_urls):
-        download_image(image_url)
+    for i, image_url in enumerate( tqdm(image_urls) ):
+        name=f'image_{str(i)}.png'
+        download_image(name,image_url)
 
 
 def get_recent_images():
