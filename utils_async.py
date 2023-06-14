@@ -3,9 +3,8 @@ import json
 from tqdm import tqdm
 from config import *
 from datetime import datetime
-
-
-
+import aiohttp,asyncio
+from aiohttp_socks import ProxyConnector
 
 proxies={}
 if allow_proxy:
@@ -13,7 +12,7 @@ if allow_proxy:
         'http':proxy,
         'https':proxy
     }
-def download_image(name,folder,image_url):
+async def download_image_async(client_session,name,folder,image_url):
     payload = {}
     headers = {
     'authority': 'cdn.midjourney.com',
@@ -30,22 +29,48 @@ def download_image(name,folder,image_url):
     'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     }
-    response = requests.request("GET", image_url, headers=headers, data=payload,proxies=proxies)
-    with open(f'{folder}/{name}','wb') as f:
-        f.write(response.content)
 
-def download_images(image_urls,folder):
+    async with client_session.get(image_url, headers=headers,data=payload) as resp:
+        response = await resp.read()
+        with open(f'{folder}/{name}','wb') as f:
+            f.write(response)
+    # response = requests.request("GET", image_url, headers=headers, data=payload,proxies=proxies)
+    # with open(f'{folder}/{name}','wb') as f:
+    #     f.write(response.content)
+
+async def download_images_async(image_urls,folder):
+    start = datetime.now()
+    proxy=os.getenv('PROXY',None)
+    if proxy:
+        proxy=proxy.replace('socks5h','socks5')
+        connector = ProxyConnector.from_url(proxy)
+        Client = aiohttp.ClientSession(trust_env=True,connector=connector)
+    else:
+        Client = aiohttp.ClientSession(trust_env=True)
+    Tasks = []
     for i, image in enumerate( tqdm(image_urls) ):
         id,url=image
         name=f'{str(id)}.png'
         if os.path.exists(f'{folder}/{name}'):
             print('image exists:',name)
             continue
-        download_image(name,folder,url)
+        Tasks.append(download_image_async(
+            client_session=Client,name=name,folder=folder,image_url=url))
+    try:
+        count=len(Tasks)
+        if count > 0:
+            await asyncio.gather(*Tasks)
+        diff = datetime.now() - start
+        print(f'{count} items downloaded in {diff.seconds} seconds')
+    except Exception as e:
+        print(e)
+        pass
+    finally:
+        await Client.close()
 
 
 
-def download_from_url(json_data,name):
+async def download_from_url_async(json_data,name):
     payload = {}
     headers = {
     'authority': 'www.midjourney.com',
@@ -80,16 +105,17 @@ def download_from_url(json_data,name):
 
     with open(f'{current_datetime_folder}/{name}_data.json','w',encoding='utf-8') as f:
         f.write(json.dumps(result,indent=4,ensure_ascii=False))
-    download_images(image_paths,current_datetime_folder)
+    await download_images_async(image_paths,current_datetime_folder)
 
-def get_recent_images():
-    download_from_url(recent_api_url,recent_folder_name)
+async def get_recent_images_async():
+    await download_from_url_async(recent_api_url,recent_folder_name)
 
-def get_top_images():
-    download_from_url(top_api_url,top_folder_name)
+async def get_top_images_async():
+    await download_from_url_async(top_api_url,top_folder_name)
 
-def get_all_images():
+
+async def get_all_images_async():
     print('getting recent images')
-    get_recent_images()
+    await get_recent_images_async()
     print('getting top images')
-    get_top_images()
+    await get_top_images_async()
