@@ -2,15 +2,18 @@ import requests
 import json
 from tqdm import tqdm
 import os
-from dotenv import load_dotenv
+
 from datetime import datetime
-load_dotenv()
+
 
 output_folder=os.getenv('OUTPUT_FOLDER')
 recent_api_url=os.getenv('RECENT_API_URL')
+top_api_url=os.getenv('TOP_API_URL')
 image_url_key=os.getenv('IMAGE_URL_KEY')
 allow_proxy=os.getenv('ALLOW_PROXY')
 proxy=os.getenv('PROXY')
+recent_folder_name=os.getenv('RECENT_FOLDER_NAME')
+top_folder_name=os.getenv('TOP_FOLDER_NAME')
 
 proxies={}
 if allow_proxy:
@@ -18,12 +21,7 @@ if allow_proxy:
         'http':proxy,
         'https':proxy
     }
-def download_image(name,image_url):
-    now=datetime.now().strftime('%Y_%m_%d')
-    current_datetime_folder=f'{output_folder}/{now}/'
-    if not os.path.exists(current_datetime_folder):
-        os.mkdir(current_datetime_folder)
-
+def download_image(name,folder,image_url):
     payload = {}
     headers = {
     'authority': 'cdn.midjourney.com',
@@ -41,17 +39,19 @@ def download_image(name,image_url):
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     }
     response = requests.request("GET", image_url, headers=headers, data=payload,proxies=proxies)
-    with open(f'{current_datetime_folder}/{name}','wb') as f:
+    with open(f'{folder}/{name}','wb') as f:
         f.write(response.content)
 
 
-def download_images(image_urls):
+
+def download_images(image_urls,folder):
     for i, image_url in enumerate( tqdm(image_urls) ):
         name=f'image_{str(i)}.png'
-        download_image(name,image_url)
+        download_image(name,folder,image_url)
 
 
-def get_recent_images():
+
+def download_from_url(json_data,name):
     payload = {}
     headers = {
     'authority': 'www.midjourney.com',
@@ -79,7 +79,22 @@ def get_recent_images():
 
     jobs=result['pageProps']['jobs']
     image_paths=[x[image_url_key][0] for x in jobs if len(x[image_url_key])>0]
-    download_images(image_paths)
 
+    now=datetime.now().strftime('%Y_%m_%d')
+    current_datetime_folder=f'{output_folder}/{now}/{name}/'
+    if not os.path.exists(current_datetime_folder):
+        os.mkdir(current_datetime_folder)
 
+    with open(f'{current_datetime_folder}/{name}_data.json','w',encoding='utf-8') as f:
+        f.write(json.dumps(result,indent=4,ensure_ascii=False))
+    download_images(image_paths,current_datetime_folder)
 
+def get_recent_images():
+    download_from_url(recent_api_url,recent_folder_name)
+
+def get_top_images():
+    download_from_url(top_folder_name,top_folder_name)
+
+def get_all_images():
+    get_recent_images()
+    get_top_images()
