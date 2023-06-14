@@ -1,19 +1,11 @@
 import requests
 import json
 from tqdm import tqdm
-import os
-
+from config import *
 from datetime import datetime
 
 
-output_folder=os.getenv('OUTPUT_FOLDER')
-recent_api_url=os.getenv('RECENT_API_URL')
-top_api_url=os.getenv('TOP_API_URL')
-image_url_key=os.getenv('IMAGE_URL_KEY')
-allow_proxy=os.getenv('ALLOW_PROXY')
-proxy=os.getenv('PROXY')
-recent_folder_name=os.getenv('RECENT_FOLDER_NAME')
-top_folder_name=os.getenv('TOP_FOLDER_NAME')
+
 
 proxies={}
 if allow_proxy:
@@ -99,5 +91,7 @@ def get_top_images():
     download_from_url(top_api_url,top_folder_name)
 
 def get_all_images():
+    print('getting recent images')
     get_recent_images()
+    print('getting top images')
     get_top_images()
