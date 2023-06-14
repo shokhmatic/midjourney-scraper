@@ -29,7 +29,7 @@ async def download_image_async(client_session,name,folder,image_url):
     'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     }
-
+    logger.info(f'download image {name}')
     async with client_session.get(image_url, headers=headers,data=payload) as resp:
         response = await resp.read()
         with open(f'{folder}/{name}','wb') as f:
@@ -52,7 +52,7 @@ async def download_images_async(image_urls,folder):
         id,url=image
         name=f'{str(id)}.png'
         if os.path.exists(f'{folder}/{name}'):
-            print('image exists:',name)
+            logger.info(f'image exists: {name}')
             continue
         Tasks.append(download_image_async(
             client_session=Client,name=name,folder=folder,image_url=url))
@@ -61,9 +61,9 @@ async def download_images_async(image_urls,folder):
         if count > 0:
             await asyncio.gather(*Tasks)
         diff = datetime.now() - start
-        print(f'{count} items downloaded in {diff.seconds} seconds')
+        logger.info(f'{count} items downloaded in {diff.seconds} seconds')
     except Exception as e:
-        print(e)
+        logger.info(e)
         pass
     finally:
         await Client.close()
@@ -87,7 +87,7 @@ async def download_from_url_async(json_data,name):
     'sec-fetch-site': 'same-origin',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     }
-
+    logger.info('start request to get json data')
     response = requests.request("GET", recent_api_url, headers=headers, data=payload,proxies=proxies)
     text=response.text
     if response.status_code != 200:
@@ -99,11 +99,13 @@ async def download_from_url_async(json_data,name):
     jobs=result['pageProps']['jobs']
     image_paths=[(x['id'],x[image_url_key][0]) for x in jobs if len(x[image_url_key])>0]
 
-    now=datetime.now().strftime('%Y_%m_%d')
-    current_datetime_folder=f'{output_folder}/{now}/{name}/'
+    nowdate=datetime.now().strftime('%Y_%m_%d')
+    current_datetime_folder=f'{output_folder}/{nowdate}/{name}/'
     os.makedirs(current_datetime_folder, exist_ok=True)
 
-    with open(f'{current_datetime_folder}/{name}_data.json','w',encoding='utf-8') as f:
+    nowtime=datetime.now().strftime('%H_%M')
+    filename=f'{current_datetime_folder}/{name}_{nowtime}.json'
+    with open(filename,'w',encoding='utf-8') as f:
         f.write(json.dumps(result,indent=4,ensure_ascii=False))
     await download_images_async(image_paths,current_datetime_folder)
 
@@ -115,7 +117,7 @@ async def get_top_images_async():
 
 
 async def get_all_images_async():
-    print('getting recent images')
+    logger.info('getting recent images')
     await get_recent_images_async()
-    print('getting top images')
+    logger.info('getting top images')
     await get_top_images_async()

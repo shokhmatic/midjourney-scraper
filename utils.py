@@ -30,20 +30,24 @@ def download_image(name,folder,image_url):
     'upgrade-insecure-requests': '1',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     }
+    logger.info(f'download image {name}')
     response = requests.request("GET", image_url, headers=headers, data=payload,proxies=proxies)
     with open(f'{folder}/{name}','wb') as f:
         f.write(response.content)
 
 def download_images(image_urls,folder):
+    start = datetime.now()
+    count=0
     for i, image in enumerate( tqdm(image_urls) ):
         id,url=image
         name=f'{str(id)}.png'
         if os.path.exists(f'{folder}/{name}'):
-            print('image exists:',name)
+            logger.info(f'image exists: {name}')
             continue
         download_image(name,folder,url)
-
-
+        count+=1
+    diff = datetime.now() - start
+    logger.info(f'{count} items downloaded in {diff.seconds} seconds')
 
 def download_from_url(json_data,name):
     payload = {}
@@ -62,7 +66,7 @@ def download_from_url(json_data,name):
     'sec-fetch-site': 'same-origin',
     'user-agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36'
     }
-
+    logger.info('start request to get json data')
     response = requests.request("GET", recent_api_url, headers=headers, data=payload,proxies=proxies)
     text=response.text
     if response.status_code != 200:
@@ -74,11 +78,13 @@ def download_from_url(json_data,name):
     jobs=result['pageProps']['jobs']
     image_paths=[(x['id'],x[image_url_key][0]) for x in jobs if len(x[image_url_key])>0]
 
-    now=datetime.now().strftime('%Y_%m_%d')
-    current_datetime_folder=f'{output_folder}/{now}/{name}/'
+    nowdate=datetime.now().strftime('%Y_%m_%d')
+    current_datetime_folder=f'{output_folder}/{nowdate}/{name}/'
     os.makedirs(current_datetime_folder, exist_ok=True)
 
-    with open(f'{current_datetime_folder}/{name}_data.json','w',encoding='utf-8') as f:
+    nowtime=datetime.now().strftime('%H_%M')
+    filename=f'{current_datetime_folder}/{name}_{nowtime}.json'
+    with open(filename,'w',encoding='utf-8') as f:
         f.write(json.dumps(result,indent=4,ensure_ascii=False))
     download_images(image_paths,current_datetime_folder)
 
@@ -89,7 +95,7 @@ def get_top_images():
     download_from_url(top_api_url,top_folder_name)
 
 def get_all_images():
-    print('getting recent images')
+    logger.info('getting recent images')
     get_recent_images()
-    print('getting top images')
+    logger.info('getting top images')
     get_top_images()
