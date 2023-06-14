@@ -88,14 +88,18 @@ def download_from_url(json_data,name):
         f.write(json.dumps(result,indent=4,ensure_ascii=False))
     download_images(image_paths,current_datetime_folder)
 
-def get_recent_images():
-    download_from_url(recent_api_url,recent_folder_name)
+def get_recent_images(folder=None):
+    if not folder:
+        folder=recent_folder_name
+    download_from_url(recent_api_url,folder)
 
-def get_top_images():
-    download_from_url(top_api_url,top_folder_name)
+def get_top_images(folder=None):
+    if not folder:
+        folder=top_folder_name
+    download_from_url(top_api_url,folder)
 
-def get_all_images():
+def get_all_images(folder=None):
     logger.info('getting recent images')
-    get_recent_images()
+    get_recent_images(folder)
     logger.info('getting top images')
-    get_top_images()
+    get_top_images(folder)

@@ -109,14 +109,18 @@ async def download_from_url_async(json_data,name):
         f.write(json.dumps(result,indent=4,ensure_ascii=False))
     await download_images_async(image_paths,current_datetime_folder)
 
-async def get_recent_images_async():
-    await download_from_url_async(recent_api_url,recent_folder_name)
+async def get_recent_images_async(folder=None):
+    if not folder:
+        folder=recent_folder_name
+    await download_from_url_async(recent_api_url,folder)
 
-async def get_top_images_async():
-    await download_from_url_async(top_api_url,top_folder_name)
+async def get_top_images_async(folder=None):
+    if not folder:
+        folder=top_folder_name
+    await download_from_url_async(top_api_url,folder)
 
 
-async def get_all_images_async():
+async def get_all_images_async(folder=None):
     logger.info('getting recent images')
     await get_recent_images_async()
     logger.info('getting top images')
