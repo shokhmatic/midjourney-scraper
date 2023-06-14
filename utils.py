@@ -45,9 +45,13 @@ def download_image(name,folder,image_url):
 
 
 def download_images(image_urls,folder):
-    for i, image_url in enumerate( tqdm(image_urls) ):
-        name=f'image_{str(i)}.png'
-        download_image(name,folder,image_url)
+    for i, image in enumerate( tqdm(image_urls) ):
+        id,url=image
+        name=f'{str(id)}.png'
+        if os.path.exists(f'{folder}/{name}'):
+            print('image exists:',name)
+            continue
+        download_image(name,folder,url)
 
 
 
@@ -78,12 +82,11 @@ def download_from_url(json_data,name):
         raise Exception(f'response is changed: {text}')
 
     jobs=result['pageProps']['jobs']
-    image_paths=[x[image_url_key][0] for x in jobs if len(x[image_url_key])>0]
+    image_paths=[(x['id'],x[image_url_key][0]) for x in jobs if len(x[image_url_key])>0]
 
     now=datetime.now().strftime('%Y_%m_%d')
     current_datetime_folder=f'{output_folder}/{now}/{name}/'
-    if not os.path.exists(current_datetime_folder):
-        os.mkdir(current_datetime_folder)
+    os.makedirs(current_datetime_folder, exist_ok=True)
 
     with open(f'{current_datetime_folder}/{name}_data.json','w',encoding='utf-8') as f:
         f.write(json.dumps(result,indent=4,ensure_ascii=False))
@@ -93,7 +96,7 @@ def get_recent_images():
     download_from_url(recent_api_url,recent_folder_name)
 
 def get_top_images():
-    download_from_url(top_folder_name,top_folder_name)
+    download_from_url(top_api_url,top_folder_name)
 
 def get_all_images():
     get_recent_images()
