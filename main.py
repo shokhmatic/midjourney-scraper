@@ -1,14 +1,16 @@
-from utils import get_all_images
+from utils import get_all_images,get_cookies_from_home_page
 from utils_async import get_all_images_async
-from config import logger,logging,output_folder
+from config import logger, logging, output_folder
 import asyncio
 import click
 
+
 @click.command()
-@click.option('--run-async' , default=False, help='Download images Async')
+@click.option('--run-async', default=False, help='Download images Async')
 @click.option('--loglevel', default=None,
-              help='Log level',type=click.Choice(list(logging.getLevelNamesMapping().keys()), case_sensitive=False))
-def run(run_async,loglevel):
+              help='Log level', type=click.Choice(list(logging.getLevelNamesMapping().keys()), case_sensitive=False))
+def run(run_async, loglevel):
+    cookies=get_cookies_from_home_page()
     if loglevel:
         logger.setLevel(loglevel.upper())
     logger.info('started')
@@ -20,17 +22,9 @@ def run(run_async,loglevel):
         except KeyboardInterrupt:
             pass
     else:
-         get_all_images()
+        get_all_images()
     logger.info('finished')
 
-if __name__=='__main__':
+
+if __name__ == '__main__':
     run()
-
-
-
-
-
-
-
-
-
