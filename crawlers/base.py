@@ -4,7 +4,7 @@ import requests
 import json
 from tqdm import tqdm
 from datetime import datetime
-from repository import ImageRepository
+# from repository import ImageRepository
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.wait import WebDriverWait
