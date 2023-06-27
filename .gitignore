@@ -160,3 +160,6 @@ cython_debug/
 #.idea/
 .env
 images
+bypass_cloudflare.png
+file.duckdb
+file.duckdb.wal
