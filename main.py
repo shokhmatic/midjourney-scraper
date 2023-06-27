@@ -1,9 +1,7 @@
-from utils import get_all_images,get_token_from_home_page
-from utils_async import get_all_images_async
 from config import logger, logging, output_folder,recent_api_url,top_api_url
 import asyncio
 import click
-from db import connect_duckdb,close_duckdb,init_duckdb
+
 from crawlers.base import CrawlerBase
 
 @click.command()
@@ -11,9 +9,7 @@ from crawlers.base import CrawlerBase
 @click.option('--loglevel', default=None,
               help='Log level', type=click.Choice(list(logging.getLevelNamesMapping().keys()), case_sensitive=False))
 def run(run_async, loglevel):
-    connect_duckdb()
     try:
-        init_duckdb()
         crawler = CrawlerBase()
         crawler.get_token()
         crawler.get_recent_images()
@@ -37,7 +33,6 @@ def run(run_async, loglevel):
 
     except Exception as e:
         logger.error(e)
-        close_duckdb()
 
 if __name__ == '__main__':
     run()
