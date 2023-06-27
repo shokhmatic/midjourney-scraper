@@ -141,4 +141,5 @@ class CrawlerBase(ABC):
         self.get_top_images()
 
     def __delattr__(self):
-        self.driver.close()
+        if self.driver:
+            self.driver.close()
