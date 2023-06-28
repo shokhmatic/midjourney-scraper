@@ -12,7 +12,8 @@ def run(run_async, loglevel):
     try:
         crawler = CrawlerBase()
         crawler.get_token()
-        crawler.get_recent_images()
+        # crawler.get_recent_images()
+        crawler.get_all_images()
         # token=get_token_from_home_page()
         # logger.info(f'token={token}')
         # recent_url=recent_api_url.format(token=token)

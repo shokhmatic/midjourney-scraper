@@ -14,7 +14,7 @@ from selenium.webdriver.support import expected_conditions as EC
 import undetected_chromedriver as uc
 from webdriver_manager.chrome import ChromeDriverManager
 from seleniumwire import webdriver
-
+import cloudscraper
 
 class CrawlerBase(ABC):
     def __init__(self,folder=None):
@@ -46,6 +46,14 @@ class CrawlerBase(ABC):
                 'https': proxy
             }
         options = webdriver.ChromeOptions()
+        # options.headless = True
+        # options.add_argument("--headless")
+        # options.add_argument("--no-sandbox")
+        # options.add_argument("--headless=chrome")
+        # options.add_argument("disable-gpu")
+        # options.add_argument("start-maximized")
+        # options.add_experimental_option("excludeSwitches", ["enable-automation"])
+        # options.add_experimental_option('useAutomationExtension', False)
         proxy_selenium = proxy.replace('socks5h://', 'socks5://')
         # proxy_selenium=proxy
         options.add_argument('--proxy-server=' + proxy_selenium)
@@ -75,8 +83,15 @@ class CrawlerBase(ABC):
         payload = {}
 
         logger.info(f'download image {name}')
-        response = requests.request(
-            "GET", image_url, headers=self.headers, data=payload, proxies=self.proxies)
+
+        scraper = cloudscraper.create_scraper()
+        response = scraper.get(image_url,proxies=self.proxies)
+        # response = requests.request(
+        #     "GET", image_url,
+        #      headers=self.headers,
+        #      data=payload,
+        #       proxies=self.proxies)
+
         with open(f'{folder}/{name}', 'wb') as f:
             f.write(response.content)
 
@@ -134,7 +149,7 @@ class CrawlerBase(ABC):
 
         self.download_images(image_paths, current_datetime_folder)
 
-    def get_all_images(self,recent_url,top_url,folder=None):
+    def get_all_images(self):
         logger.info('getting recent images')
         self.get_recent_images()
         logger.info('getting top images')
