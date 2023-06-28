@@ -57,17 +57,21 @@ class CrawlerBase(ABC):
         proxy_selenium = proxy.replace('socks5h://', 'socks5://')
         # proxy_selenium=proxy
         options.add_argument('--proxy-server=' + proxy_selenium)
-        self.driver = uc.Chrome(options=options,
-                                service=ChromeService(ChromeDriverManager().install()))
-
+        # self.driver = uc.Chrome(options=options,
+        #                         service=ChromeService(ChromeDriverManager().install()))
+        self.scraper = cloudscraper.create_scraper()
     def get_token(self):
         url=home_page_url
-        self.driver.get(url)
-        WebDriverWait(self.driver, 20).until(
-            lambda driver: driver.title == 'Midjourney Showcase')
-        content = self.driver.page_source
-        self.driver.save_screenshot('bypass_cloudflare.png')
-        token = content.split('"buildId":"')[-1].split('"')[0]
+
+
+        res=self.scraper.get(url,proxies=self.proxies)
+        token = res.text.split('"buildId":"')[-1].split('"')[0]
+        # self.driver.get(url)
+        # WebDriverWait(self.driver, 20).until(
+        #     lambda driver: driver.title == 'Midjourney Showcase')
+        # content = self.driver.page_source
+        # self.driver.save_screenshot('bypass_cloudflare.png')
+        # token = content.split('"buildId":"')[-1].split('"')[0]
         self.token = token
         return token
 
@@ -84,8 +88,8 @@ class CrawlerBase(ABC):
 
         logger.info(f'download image {name}')
 
-        scraper = cloudscraper.create_scraper()
-        response = scraper.get(image_url,proxies=self.proxies)
+
+        response = self.scraper.get(image_url,proxies=self.proxies)
         # response = requests.request(
         #     "GET", image_url,
         #      headers=self.headers,
@@ -112,14 +116,15 @@ class CrawlerBase(ABC):
     def download_from_url(self,url, name):
         payload = {}
         logger.info('start request to get json data')
-        self.driver.get(url)
-        WebDriverWait(self.driver, 20).until(
-            lambda driver: 'pageProps' in driver.page_source )
-        body = self.driver.find_element(By.TAG_NAME,'Body')
-        # html = self.driver.page_source
-
-        self.driver.save_screenshot('bypass_cloudflare.png')
-        result = json.loads(body.text)
+        res= self.scraper.get(url,proxies=self.proxies)
+        result=json.loads(res.text)
+        # self.driver.get(url)
+        # WebDriverWait(self.driver, 20).until(
+        #     lambda driver: 'pageProps' in driver.page_source )
+        # body = self.driver.find_element(By.TAG_NAME,'Body')
+        # # html = self.driver.page_source
+        # self.driver.save_screenshot('bypass_cloudflare.png')
+        # result = json.loads(body.text)
 
         # write to file
 
